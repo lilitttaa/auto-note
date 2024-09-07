@@ -160,6 +160,7 @@ def main():
     precious_interval = 0.5
     low_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
     high_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
+    subtitle_file_path = r"D:\Project\auto-note\script.txt"
     enable_img_sub_dir = True
 
     output_dir_path = os.path.join(dir_path, note_name)
@@ -217,7 +218,7 @@ def main():
     print("save frame done.")
 
     print("start generate markdown...")
-    subtitle_infos = read_subtitle_file("script.txt")
+    subtitle_infos = read_subtitle_file(subtitle_file_path)
     subtitle_frame_infos = split_subtitle(subtitle_infos, precision_frame_infos)
     with open(
         os.path.join(output_dir_path, f"{note_name}.md"), "w", encoding="utf-8"
