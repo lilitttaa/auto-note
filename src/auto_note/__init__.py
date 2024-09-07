@@ -2,6 +2,8 @@ from typing import List
 import cv2
 import time
 import numpy as np
+import os
+import shutil
 
 
 def calculate_mse(frame1, frame2):
@@ -23,6 +25,7 @@ def generate_key_frame_infos(
     interval: int,
     mse_threshold: int,
 ):
+    print("start generate key frame infos...")
     frame = None
     previous_frame = None
     frame_time = 0
@@ -42,6 +45,7 @@ def generate_key_frame_infos(
                 print("generate key frame: ", frame_time)
                 frame_infos.append(FrameInfo(frame, frame_time))
             previous_frame = frame.copy()
+    print("generate key frame infos done.")
     return frame_infos
 
 
@@ -108,13 +112,17 @@ class SubtitleFrameInfo:
         self.frame_info = frame_info
         self.subtitle_infos = subtitle_infs
 
-    def to_markdown(self):
+    def to_markdown(self, enable_img_sub_dir: bool):
         frame_time_str = format_millis_with_ms(self.frame_info.frame_time)
         markdown = f"### {frame_time_str}\n\n"
         file_name = time.strftime(
             "%H-%M-%S", time.gmtime(self.frame_info.frame_time / 1000)
         )
-        markdown += f"![{file_name}](tmp/{file_name}.jpg)\n\n"
+        markdown += (
+            f"![{file_name}](tmp/{file_name}.jpg)\n\n"
+            if enable_img_sub_dir
+            else f"![{file_name}]({file_name}.jpg)\n\n"
+        )
         for subtitle_info in self.subtitle_infos:
             markdown += f"{subtitle_info.text}\n\n"
         return markdown
@@ -138,57 +146,89 @@ def split_subtitle(subtitle_infos: List[SubtitleInfo], frame_infos: List[FrameIn
     return subtitle_frame_infos
 
 
+def reset_dir(dir: str):
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
+
+
 def main():
-    import os
-    import shutil
+    note_name = "Note_Games101_3"
+    dir_path = r"D:\Project\auto-note"
+    mse_threshold = 1000
+    interval = 10
+    precious_interval = 0.5
+    low_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
+    high_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
+    enable_img_sub_dir = True
 
-    if os.path.exists("tmp"):
-        shutil.rmtree("tmp")
-    os.makedirs("tmp")
+    output_dir_path = os.path.join(dir_path, note_name)
+    reset_dir(output_dir_path)
+    if enable_img_sub_dir:
+        reset_dir(os.path.join(output_dir_path, "tmp"))
 
-    video_path = r"D:\Project\auto-note\134040933-1-6.mp4"
-    cap = cv2.VideoCapture(video_path)
+    cap = cv2.VideoCapture(low_res_video_path)
     if not cap.isOpened():
         print("Error: Could not open video.")
         return
     fps = cap.get(cv2.CAP_PROP_FPS)
-    mse_threshold = 1000
-    print("start generate key frame infos...")
-    frame_infos = generate_key_frame_infos(cap, fps, 10, mse_threshold)
-    print("generate key frame infos done.")
-    for frame_info in frame_infos:
-        frame_time_str = time.strftime(
-            "%H:%M:%S", time.gmtime(frame_info.frame_time / 1000)
-        )
-        print(f"frame_time: {frame_time_str}")
-    print("-----------------------------")
+    frame_infos = generate_key_frame_infos(cap, fps, interval, mse_threshold)
+
     print("start find precision frame...")
     precision_frame_infos: List[FrameInfo] = []
     for frame_info in frame_infos:
         precision_frame_info = find_precision_frame(
             cap,
             frame_info,
-            10 * 1000,
+            interval * 1000,
             fps,
-            0.5,
+            precious_interval,
             mse_threshold,
         )
         precision_frame_infos.append(precision_frame_info)
+    print("find precision frame done.")
+    cap.release()
+    cv2.destroyAllWindows()
+
+    print("start save frame...")
+    cap = cv2.VideoCapture(high_res_video_path)
+    if not cap.isOpened():
+        print("Error: Could not open video.")
+        return
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    for precision_frame_info in precision_frame_infos:
+        cap.set(cv2.CAP_PROP_POS_MSEC, precision_frame_info.frame_time)
+        ret, frame = cap.read()
+        if not ret:
+            break
         frame_time_str = format_millis_with_ms(precision_frame_info.frame_time)
         file_name = time.strftime(
             "%H-%M-%S", time.gmtime(precision_frame_info.frame_time / 1000)
         )
-        cv2.imwrite(f"tmp\{file_name}.jpg", precision_frame_info.frame)
+        file_path = (
+            os.path.join(note_name, "tmp", f"{file_name}.jpg")
+            if enable_img_sub_dir
+            else os.path.join(note_name, f"{file_name}.jpg")
+        )
+        cv2.imwrite(file_path, frame)
         print("save frame: ", frame_time_str)
-    print("find precision frame done.")
     cap.release()
     cv2.destroyAllWindows()
+    print("save frame done.")
+
+    print("start generate markdown...")
     subtitle_infos = read_subtitle_file("script.txt")
     subtitle_frame_infos = split_subtitle(subtitle_infos, precision_frame_infos)
-    with open("output.md", "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(output_dir_path, f"{note_name}.md"), "w", encoding="utf-8"
+    ) as f:
+        f.write("---\n")
+        f.write(f"title: {note_name}\n")
+        f.write("---\n\n")
         for subtitle_frame_info in subtitle_frame_infos:
-            f.write(subtitle_frame_info.to_markdown())
+            f.write(subtitle_frame_info.to_markdown(enable_img_sub_dir))
             f.write("\n")
+    print("generate markdown done.")
 
 
 if __name__ == "__main__":
