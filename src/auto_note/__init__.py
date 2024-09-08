@@ -152,17 +152,17 @@ def reset_dir(dir: str):
     os.makedirs(dir)
 
 
-def main():
-    note_name = "Note_Games101_3"
-    dir_path = r"D:\Project\auto-note"
-    mse_threshold = 1000
-    interval = 10
-    precious_interval = 0.5
-    low_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
-    high_res_video_path = r"D:\Project\auto-note\games101_3.mp4"
-    subtitle_file_path = r"D:\Project\auto-note\script.txt"
-    enable_img_sub_dir = True
-
+def generate_note(
+    note_name: str,
+    dir_path: str,
+    mse_threshold: int,
+    interval: int,
+    precious_interval: float,
+    low_res_video_path: str,
+    high_res_video_path: str,
+    subtitle_file_path: str,
+    enable_img_sub_dir: bool,
+):
     output_dir_path = os.path.join(dir_path, note_name)
     reset_dir(output_dir_path)
     if enable_img_sub_dir:
@@ -232,5 +232,130 @@ def main():
     print("generate markdown done.")
 
 
+import tkinter as tk
+from tkinter import filedialog
+
+
+class App:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("auto-note")
+
+        self.note_name = tk.StringVar(value="Note_Games101_2")
+        self.dir_path = tk.StringVar(value=r"D:\Project\auto-note")
+        self.mse_threshold = tk.IntVar(value=1000)
+        self.interval = tk.IntVar(value=10)
+        self.precious_interval = tk.DoubleVar(value=0.5)
+        self.low_res_video_path = tk.StringVar(value=r"D:\Project\auto-note\155050182-1-16.mp4")
+        self.high_res_video_path = tk.StringVar(value=r"D:\Project\auto-note\155050182-1-16.mp4")
+        self.subtitle_file_path = tk.StringVar(value=r"D:\Project\auto-note\script.txt")
+        self.enable_img_sub_dir = tk.BooleanVar(value=True)
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        tk.Label(self.master, text="配置名称:").grid(row=0, column=0)
+        tk.Entry(self.master, textvariable=self.note_name).grid(row=0, column=1)
+
+        tk.Label(self.master, text="目录路径:").grid(row=1, column=0)
+        tk.Entry(self.master, textvariable=self.dir_path).grid(row=1, column=1)
+        tk.Button(self.master, text="浏览...", command=self.browse_dir).grid(
+            row=1, column=2
+        )
+
+        tk.Label(self.master, text="MSE 阈值:").grid(row=2, column=0)
+        tk.Entry(self.master, textvariable=self.mse_threshold).grid(row=2, column=1)
+
+        tk.Label(self.master, text="间隔:").grid(row=3, column=0)
+        tk.Entry(self.master, textvariable=self.interval).grid(row=3, column=1)
+
+        tk.Label(self.master, text="精确间隔:").grid(row=4, column=0)
+        tk.Entry(self.master, textvariable=self.precious_interval).grid(row=4, column=1)
+
+        tk.Label(self.master, text="低分辨率视频路径:").grid(row=5, column=0)
+        tk.Entry(self.master, textvariable=self.low_res_video_path).grid(
+            row=5, column=1
+        )
+        tk.Button(self.master, text="浏览...", command=self.browse_video_low_res).grid(
+            row=5, column=2
+        )
+
+        tk.Label(self.master, text="高分辨率视频路径:").grid(row=6, column=0)
+        tk.Entry(self.master, textvariable=self.high_res_video_path).grid(
+            row=6, column=1
+        )
+        tk.Button(self.master, text="浏览...", command=self.browse_video_high_res).grid(
+            row=6, column=2
+        )
+
+        tk.Label(self.master, text="字幕文件路径:").grid(row=7, column=0)
+        tk.Entry(self.master, textvariable=self.subtitle_file_path).grid(
+            row=7, column=1
+        )
+        tk.Button(self.master, text="浏览...", command=self.browse_file).grid(
+            row=7, column=2
+        )
+
+        tk.Checkbutton(
+            self.master, text="启用图片子目录", variable=self.enable_img_sub_dir
+        ).grid(row=8, column=0, columnspan=2)
+
+        tk.Button(self.master, text="Generate", command=self.generate).grid(
+            row=9, column=0, columnspan=3
+        )
+
+    def browse_dir(self):
+        self.dir_path.set(filedialog.askdirectory())
+
+    def browse_video_low_res(self):
+        self.low_res_video_path.set(
+            filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
+        )
+        
+    def browse_video_high_res(self):
+        self.high_res_video_path.set(
+            filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
+        )
+
+    def browse_file(self):
+        self.subtitle_file_path.set(
+            filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+        )
+
+    def generate(self):
+        # note_name = "Note_Games101_2"
+        # dir_path = r"D:\Project\auto-note"
+        # mse_threshold = 1000
+        # interval = 10
+        # precious_interval = 0.5
+        # low_res_video_path = r"D:\Project\auto-note\155050182-1-16.mp4"
+        # high_res_video_path = r"D:\Project\auto-note\155050182-1-16.mp4"
+        # subtitle_file_path = r"D:\Project\auto-note\script.txt"
+        # enable_img_sub_dir = True
+        note_name = self.note_name.get()
+        dir_path = self.dir_path.get()
+        mse_threshold = self.mse_threshold.get()
+        interval = self.interval.get()
+        precious_interval = self.precious_interval.get()
+        low_res_video_path = self.low_res_video_path.get()
+        high_res_video_path = self.high_res_video_path.get()
+        subtitle_file_path = self.subtitle_file_path.get()
+        enable_img_sub_dir = self.enable_img_sub_dir.get()
+        generate_note(
+            note_name,
+            dir_path,
+            mse_threshold,
+            interval,
+            precious_interval,
+            low_res_video_path,
+            high_res_video_path,
+            subtitle_file_path,
+            enable_img_sub_dir,
+        )
+
+
 if __name__ == "__main__":
-    main()
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
+
