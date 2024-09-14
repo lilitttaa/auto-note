@@ -250,6 +250,8 @@ class App:
         self.high_res_video_path = tk.StringVar(value=r"D:\Project\auto-note\155050182-1-16.mp4")
         self.subtitle_file_path = tk.StringVar(value=r"D:\Project\auto-note\script.txt")
         self.enable_img_sub_dir = tk.BooleanVar(value=True)
+        self.download_bilibili_url = tk.StringVar(value="https://www.bilibili.com/video/BV1FT411x7hU")
+        self.download_bilibili_name = tk.StringVar(value="BV1FT411x7hU")
 
         self.create_widgets()
 
@@ -303,6 +305,11 @@ class App:
         tk.Button(self.master, text="Generate", command=self.generate).grid(
             row=9, column=0, columnspan=3
         )
+        tk.Label(self.master, text="Bilibili视频URL:").grid(row=10, column=0)
+        tk.Entry(self.master, textvariable=self.download_bilibili_url).grid(row=10, column=1)
+        tk.Label(self.master, text="下载名称:").grid(row=11, column=0)
+        tk.Entry(self.master, textvariable=self.download_bilibili_name).grid(row=11, column=1)
+        tk.Button(self.master, text="Download", command=self.download).grid(row=12, column=0, columnspan=3)
 
     def browse_dir(self):
         self.dir_path.set(filedialog.askdirectory())
@@ -311,7 +318,7 @@ class App:
         self.low_res_video_path.set(
             filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
         )
-        
+
     def browse_video_high_res(self):
         self.high_res_video_path.set(
             filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
@@ -321,6 +328,13 @@ class App:
         self.subtitle_file_path.set(
             filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
         )
+
+    def download(self):
+        dir_path = self.dir_path.get()
+        bilibili_download_url = self.download_bilibili_url.get()
+        download_bilibili_name = self.download_bilibili_name.get()
+        downloader = BilibiliDownloader(dir_path)
+        downloader.download(bilibili_download_url, download_bilibili_name)
 
     def generate(self):
         # note_name = "Note_Games101_2"
@@ -352,6 +366,58 @@ class App:
             subtitle_file_path,
             enable_img_sub_dir,
         )
+
+import os
+import subprocess
+class BilibiliDownloader:
+    def __init__(self, dir_path: str):
+        self.dir_path = dir_path
+        self.env = os.environ.copy()
+        self.add_2_env_path(dir_path)
+    
+    def add_2_env_path(self, env_path: str):
+        self.env["PATH"] = env_path + ";" + self.env["PATH"]
+
+    def download(self, url:str, file_name:str):
+        output_dir_path = os.path.join(self.dir_path, file_name)
+        self._download_bilibili(url, True, True, output_dir_path, "low_res_video", self.dir_path, self.env)
+        self._download_bilibili(url, False, True, output_dir_path, "high_res_video", self.dir_path, self.env)
+        # self._download_bilibili(url, True, False, output_dir_path, "low_res_audio", self.dir_path, self.env)
+        # self._download_bilibili(url, False, False, output_dir_path, "high_res_audio", self.dir_path, self.env)
+
+
+    def _download_bilibili(
+        self,
+        url: str,
+        low_res: bool,
+        video_or_audio: bool,
+        output_dir_path: str,
+        output_file_name: str,
+        cwd: str,
+        env: dict,
+    ):
+        if low_res:
+            prior = "360P 流畅，480P 清晰，720P 高清，1080P 高清"
+        else:
+            prior = "1080P 高清，720P 高清，480P 清晰，360P 流畅"
+
+        flag = "--video-only" if video_or_audio else "--audio-only"
+        subprocess.run(
+            [
+                "BBDown.exe",
+                url,
+                f'-q="{prior}"',
+                "-tv",
+                f"--work-dir={output_dir_path}",
+                f"-F={output_file_name}",
+                flag,
+            ],
+            check=True,
+            cwd=cwd,
+            env=env,
+        )
+
+
 
 
 if __name__ == "__main__":
