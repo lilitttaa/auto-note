@@ -164,7 +164,7 @@ def generate_note(
     enable_img_sub_dir: bool,
 ):
     output_dir_path = os.path.join(dir_path, note_name)
-    reset_dir(output_dir_path)
+    # reset_dir(output_dir_path)
     if enable_img_sub_dir:
         reset_dir(os.path.join(output_dir_path, "tmp"))
 
@@ -251,7 +251,7 @@ class App:
         self.subtitle_file_path = tk.StringVar(value=r"D:\Project\auto-note\script.txt")
         self.enable_img_sub_dir = tk.BooleanVar(value=True)
         self.download_bilibili_url = tk.StringVar(value="https://www.bilibili.com/video/BV1FT411x7hU")
-        self.download_bilibili_name = tk.StringVar(value="BV1FT411x7hU")
+        # self.download_bilibili_name = tk.StringVar(value="BV1FT411x7hU")
 
         self.create_widgets()
 
@@ -307,8 +307,8 @@ class App:
         )
         tk.Label(self.master, text="Bilibili视频URL:").grid(row=10, column=0)
         tk.Entry(self.master, textvariable=self.download_bilibili_url).grid(row=10, column=1)
-        tk.Label(self.master, text="下载名称:").grid(row=11, column=0)
-        tk.Entry(self.master, textvariable=self.download_bilibili_name).grid(row=11, column=1)
+        # tk.Label(self.master, text="下载名称:").grid(row=11, column=0)
+        # tk.Entry(self.master, textvariable=self.download_bilibili_name).grid(row=11, column=1)
         tk.Button(self.master, text="Download", command=self.download).grid(row=12, column=0, columnspan=3)
 
     def browse_dir(self):
@@ -332,20 +332,11 @@ class App:
     def download(self):
         dir_path = self.dir_path.get()
         bilibili_download_url = self.download_bilibili_url.get()
-        download_bilibili_name = self.download_bilibili_name.get()
+        name = self.note_name.get()
         downloader = BilibiliDownloader(dir_path)
-        downloader.download(bilibili_download_url, download_bilibili_name)
+        downloader.download(bilibili_download_url, name)
 
     def generate(self):
-        # note_name = "Note_Games101_2"
-        # dir_path = r"D:\Project\auto-note"
-        # mse_threshold = 1000
-        # interval = 10
-        # precious_interval = 0.5
-        # low_res_video_path = r"D:\Project\auto-note\155050182-1-16.mp4"
-        # high_res_video_path = r"D:\Project\auto-note\155050182-1-16.mp4"
-        # subtitle_file_path = r"D:\Project\auto-note\script.txt"
-        # enable_img_sub_dir = True
         note_name = self.note_name.get()
         dir_path = self.dir_path.get()
         mse_threshold = self.mse_threshold.get()
