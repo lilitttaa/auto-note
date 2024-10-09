@@ -4,6 +4,7 @@ import time
 import numpy as np
 import os
 import shutil
+from bs4 import BeautifulSoup
 
 
 def calculate_mse(frame1, frame2):
@@ -409,6 +410,44 @@ class BilibiliDownloader:
         )
 
 
+class SiderSubtitleGenerator:
+    def __init__(self):
+        self.html_path = r"D:\Project\auto-note\html.txt"
+        self.output_script_path = r"D:\Project\auto-note\script.txt"
+
+    def _get_html(self, path: str):
+        html = ""
+        with open(path, "r", encoding="utf-8") as f:
+            html = f.read()
+        return html
+
+    def _find_time_and_subtitle(self, div):
+        time = div.find_all("div")[0].text
+        subtitle = div.find_all("div")[1].find_all("div")[0].text
+        return time, subtitle
+
+    def _write_script(self, path: str, results):
+        with open(path, "w", encoding="utf-8") as f:
+            for time, subtitle in results:
+                f.write(f"{time} {subtitle}\n")
+
+    def generate_script_from_sider(self):
+        html = self._get_html(self.html_path)
+        soup = BeautifulSoup(html, "html.parser")
+        wer = soup.find_all("div", class_="web-enhance-result")
+        divs = wer[0].find_all("div", recursive=False)
+        results = []
+        for div in divs:
+            try:
+                time, subtitle = self._find_time_and_subtitle(div)
+                results.append((time, subtitle))
+            except:
+                print("find_time_and_subtitle error: ", div)
+
+        self._write_script(self.output_script_path, results)
+
+
+# SiderSubtitleGenerator().generate_script_from_sider()
 
 
 if __name__ == "__main__":
